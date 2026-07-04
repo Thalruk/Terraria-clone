@@ -8,6 +8,7 @@ public class Chunk : MonoBehaviour
     [Header("Grafiki kafelków")]
     [SerializeField] private TileBase grassTile;
     [SerializeField] private TileBase dirtTile;
+    [SerializeField] private TileBase stoneTile;
 
     public void SetUp(Vector2 posiition)
     {
@@ -27,10 +28,10 @@ public class Chunk : MonoBehaviour
                 int index = x + (y * chunkSize);
                 tileArray[index] = worldData.tiles[globalX, globalY].type switch
                 {
-                    TileType.Air => dirtTile,
+                    TileType.Air => null,
                     TileType.Grass => grassTile,
                     TileType.Dirt => dirtTile,
-                    TileType.Stone => grassTile,
+                    TileType.Stone => stoneTile,
                     _ => grassTile,
                 };
             }

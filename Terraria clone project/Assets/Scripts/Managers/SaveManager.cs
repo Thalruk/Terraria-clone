@@ -13,6 +13,7 @@ public class SaveManager
                 writer.Write(worldData.name);
                 writer.Write(worldData.sizeX);
                 writer.Write(worldData.sizeY);
+                writer.Write(worldData.seed);
                 for (int x = 0; x < worldData.sizeX; x++)
                 {
                     for (int y = 0; y < worldData.sizeY; y++)
@@ -34,7 +35,7 @@ public class SaveManager
                 string loadedName = reader.ReadString();
                 int loadedSizeX = reader.ReadInt32();
                 int loadedSizeY = reader.ReadInt32();
-
+                int seed = reader.ReadInt32();
                 TileData[,] tiles = new TileData[loadedSizeX, loadedSizeY];
                 for (int x = 0; x < tiles.GetLength(0); x++)
                 {
@@ -45,7 +46,7 @@ public class SaveManager
                 }
 
                 Debug.Log($"World succesfully loaded in: {Application.persistentDataPath}");
-                return new WorldData(loadedName, loadedSizeX, loadedSizeY, tiles);
+                return new WorldData(loadedName, loadedSizeX, loadedSizeY, seed, tiles);
             }
         }
 

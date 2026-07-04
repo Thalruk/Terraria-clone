@@ -115,7 +115,7 @@ TilemapRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  - {fileID: 2100000, guid: a1fc02bb524225348bc0dbf0b66b5881, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -191,11 +191,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tilemap: {fileID: 263938292048687736}
-  grassTile: {fileID: 11400000, guid: 7c909b75dcc42e74599a052f9f0b3131, type: 2}
+  grassTile: {fileID: 11400000, guid: 95f7db5bdfc00a645af541767acc18f3, type: 2}
   dirtTile: {fileID: 11400000, guid: 522b4d96c832ed943b419dce8c45824e, type: 2}
-  area:
-    m_Position: {x: 0, y: 0, z: 0}
-    m_Size: {x: 0, y: 0, z: 0}
+  stoneTile: {fileID: 11400000, guid: 7c909b75dcc42e74599a052f9f0b3131, type: 2}
 --- !u!156049354 &2359729719768172495
 Grid:
   m_ObjectHideFlags: 0

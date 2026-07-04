@@ -11,6 +11,7 @@ public class WorldManager : MonoBehaviour
     [SerializeField] Vector2 spawnPoint;
     [SerializeField] private PolygonCollider2D worldBoundsCollider;
     [SerializeField] private CinemachineConfiner2D cameraConfiner;
+    [SerializeField] WorldPreview preview;
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -22,7 +23,7 @@ public class WorldManager : MonoBehaviour
             Instance = this;
         }
     }
-    private void Start()
+    private async void Start()
     {
         int totalSizeX = worldChunkSize.x * chunkSize;
         int totalSizeY = worldChunkSize.y * chunkSize;
@@ -43,9 +44,10 @@ public class WorldManager : MonoBehaviour
         }
 
 
-        //worldData = await WorldGenerator.GenerateWorldAsync("Test", totalSizeX, totalSizeY);
-
+        worldData = await WorldGenerator.GenerateWorldAsync("Test", totalSizeX, totalSizeY, 0);
+        preview.GeneratePreview(worldData);
         //SaveManager.SaveWorld(worldData);
-        worldData = SaveManager.LoadWorld("Test");
+
+        //worldData = SaveManager.LoadWorld("Test");
     }
 }
