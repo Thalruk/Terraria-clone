@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 13312, guid: 0000000000000000e000000000000000, type: 0}
-  m_Name: Stoner
+  m_Name: Stoner 1
   m_EditorClassIdentifier: 
-  m_Sprite: {fileID: 21300000, guid: f2abc8cb06825d04c800a0864f84f5fb, type: 3}
-  m_Color: {r: 0.1792453, g: 0.1792453, b: 0.1792453, a: 1}
+  m_Sprite: {fileID: 21300000, guid: 2b8f2f3bee44ff64ea22954ff2a27955, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Transform:
     e00: 1
     e01: 0

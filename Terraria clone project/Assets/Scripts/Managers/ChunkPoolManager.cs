@@ -29,7 +29,7 @@ public class ChunkPoolManager : MonoBehaviour
             inactiveChunks.RemoveAt(0);
             activeChunks.Add(chunk);
             chunk.gameObject.SetActive(true);
-            chunk.ClearTilemap();
+            chunk.ClearTilemaps();
             return chunk;
         }
         else

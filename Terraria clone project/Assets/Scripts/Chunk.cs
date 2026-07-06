@@ -3,13 +3,21 @@ using UnityEngine.Tilemaps;
 
 public class Chunk : MonoBehaviour
 {
-    [SerializeField] private Tilemap tilemap;
+    [SerializeField] Tilemap wallMap;
+    [SerializeField] Tilemap baseMap;
+    [SerializeField] Tilemap damageMap;
 
-    [Header("Grafiki kafelków")]
+    [Header("Tiles")]
     [SerializeField] private TileBase grassTile;
     [SerializeField] private TileBase dirtTile;
     [SerializeField] private TileBase stoneTile;
 
+    [Header("Walls")]
+    [SerializeField] private TileBase dirtWall;
+    [SerializeField] private TileBase stoneWall;
+
+    [Header("Damage")]
+    [SerializeField] private TileBase singleDamageTile;
     public void SetUp(Vector2 posiition)
     {
         transform.position = posiition;
@@ -17,6 +25,7 @@ public class Chunk : MonoBehaviour
     public void RenderWorld(WorldData worldData, int chunkX, int chunkY, int chunkSize)
     {
         TileBase[] tileArray = new TileBase[chunkSize * chunkSize];
+        TileBase[] wallArray = new TileBase[chunkSize * chunkSize];
 
         for (int x = 0; x < chunkSize; x++)
         {
@@ -34,16 +43,40 @@ public class Chunk : MonoBehaviour
                     TileType.Stone => stoneTile,
                     _ => grassTile,
                 };
+
+                wallArray[index] = worldData.tiles[globalX, globalY].wall switch
+                {
+                    WallType.Air => null,
+                    WallType.DirtWall => dirtWall,
+                    WallType.StoneWall => stoneWall,
+                    _ => null,
+                };
             }
         }
 
         BoundsInt bounds = new BoundsInt(0, 0, 0, chunkSize, chunkSize, 1);
-        tilemap.ClearAllTiles();
-        tilemap.SetTilesBlock(bounds, tileArray);
+        baseMap.ClearAllTiles();
+        baseMap.SetTilesBlock(bounds, tileArray);
+
+        wallMap.ClearAllTiles();
+        wallMap.SetTilesBlock(bounds, wallArray);
     }
 
-    internal void ClearTilemap()
+
+    public void UpdateDamageVisual(int localX, int localY, bool isDamaged)
     {
-        tilemap.ClearAllTiles();
+        TileBase tileToSet = isDamaged ? singleDamageTile : null;
+        damageMap.SetTile(new Vector3Int(localX, localY, 0), tileToSet);
+    }
+    public void SetDamage(int localX, int localY, TileBase tile)
+    {
+        damageMap.SetTile(new Vector3Int(localX, localY, 0), tile);
+    }
+
+    internal void ClearTilemaps()
+    {
+        baseMap.ClearAllTiles();
+        wallMap.ClearAllTiles();
+        damageMap.ClearAllTiles();
     }
 }

@@ -13,19 +13,19 @@ public static class WorldGenerator
             GenerateTerrainBase(worldData, heightMap);
             GenerateStone(worldData, heightMap);
             GenerateCaves(worldData);
+            worldData.spawnPoint = GetSpawnPoint(worldData);
         });
         return worldData;
     }
 
     public static void GenerateTerrainBase(WorldData worldData, int[] heightMap)
     {
-        // Parametry kszta³towania terenu
-        int maxElevation = 120; // Maksymalna wysokoœæ gór w klockach
-        int seaLevel = worldData.sizeY * 2 / 3; // Poziom bazowy powierzchni
-        int octaves = 3; // Iloœæ warstw szumu
-        float persistence = 0.4f; // Jak szybko malej¹ góry w kolejnych oktawach
-        float lacunarity = 3f; // Jak szybko zagêszczaj¹ siê detale
-        float baseScale = 600f; // G³ówny dzielnik rozci¹gaj¹cy kontynenty
+        int maxElevation = 120;
+        int seaLevel = worldData.sizeY * 1 / 2;
+        int octaves = 3;
+        float persistence = 0.4f;
+        float lacunarity = 3f;
+        float baseScale = 600f;
 
         for (int x = 0; x < worldData.sizeX; x++)
         {
@@ -34,12 +34,10 @@ public static class WorldGenerator
             float noiseHeight = 0f;
             float maxValue = 0f;
 
-            // Nak³adanie warstw szumu (Fractal Brownian Motion)
             for (int i = 0; i < octaves; i++)
             {
                 float sampleX = (x / baseScale) * frequency + (worldData.seed % 100000) + (i * 5000);
 
-                // Szum od -1 do 1
                 float perlinValue = Mathf.PerlinNoise(sampleX, 0f) * 2f - 1f;
 
                 noiseHeight += perlinValue * amplitude;
@@ -49,37 +47,30 @@ public static class WorldGenerator
                 frequency *= lacunarity;
             }
 
-            // Normalizacja wyniku do bezpiecznego przedzia³u 0.0 - 1.0
             float normalizedHeight = (noiseHeight + maxValue) / (2f * maxValue);
 
-            // Redystrybucja - potêgowanie sp³aszcza doliny i wyostrza szczyty
             normalizedHeight = Mathf.Pow(normalizedHeight, 2f);
 
-            // Ostateczna kalkulacja pozycji Y dla powierzchni
             int surfaceHeight = Mathf.RoundToInt(normalizedHeight * maxElevation) + seaLevel;
             heightMap[x] = surfaceHeight;
 
-            // Wype³nianie kolumny w dó³ i w górê
             for (int y = 0; y < worldData.sizeY; y++)
             {
                 if (y > surfaceHeight)
                 {
-                    worldData.tiles[x, y] = new TileData { type = TileType.Air };
+                    worldData.tiles[x, y] = new TileData { type = TileType.Air, wall = WallType.Air };
                 }
                 else if (y == surfaceHeight)
                 {
-                    worldData.tiles[x, y] = new TileData { type = TileType.Grass };
+                    worldData.tiles[x, y] = new TileData { type = TileType.Grass, wall = WallType.DirtWall };
                 }
                 else
                 {
-                    worldData.tiles[x, y] = new TileData { type = TileType.Dirt };
+                    worldData.tiles[x, y] = new TileData { type = TileType.Dirt, wall = WallType.DirtWall };
                 }
             }
         }
     }
-
-
-
     public static void GenerateStone(WorldData worldData, int[] heightMap)
     {
         float offsetX = worldData.seed % 100000;
@@ -102,7 +93,7 @@ public static class WorldGenerator
 
                     if (noise > dynamicThreshold)
                     {
-                        worldData.tiles[x, y].type = TileType.Stone;
+                        worldData.tiles[x, y] = new TileData(TileType.Stone, WallType.StoneWall);
                     }
                 }
             }
@@ -113,72 +104,75 @@ public static class WorldGenerator
     {
         System.Random rng = new System.Random(worldData.seed);
 
-        // 1. Inicjalizacja: Wype³niamy kamieñ/ziemiê "dziurami" (szum startowy)
-        // 40% szansy na Air jest idealne dla jaskiñ, które siê ³¹cz¹, ale zostawiaj¹ œciany
-        for (int x = 0; x < worldData.sizeX; x++)
-        {
-            for (int y = 0; y < worldData.sizeY; y++)
-            {
-                // Nie ruszamy powierzchni (np. top 10 klocków)
-                if (y > worldData.sizeY - 10) continue;
+        int tunnelCount = 20;
 
-                if (worldData.tiles[x, y].type == TileType.Dirt || worldData.tiles[x, y].type == TileType.Stone)
+        for (int i = 0; i < tunnelCount; i++)
+        {
+            float currentX = rng.Next(20, worldData.sizeX - 20);
+            float currentY = rng.Next(20, worldData.sizeY - 40);
+
+            float angle = (float)(rng.NextDouble() * Mathf.PI * 2);
+
+            int lifeTime = rng.Next(60, 150);
+
+            float radius = rng.Next(3, 7);
+
+            for (int step = 0; step < lifeTime; step++)
+            {
+                int cx = Mathf.RoundToInt(currentX);
+                int cy = Mathf.RoundToInt(currentY);
+
+                for (int tx = cx - Mathf.CeilToInt(radius); tx <= cx + Mathf.CeilToInt(radius); tx++)
                 {
-                    if (rng.NextDouble() < 0.40f)
-                        worldData.tiles[x, y].type = TileType.Air;
+                    for (int ty = cy - Mathf.CeilToInt(radius); ty <= cy + Mathf.CeilToInt(radius); ty++)
+                    {
+                        if (tx >= 0 && tx < worldData.sizeX && ty >= 0 && ty < worldData.sizeY)
+                        {
+                            if (ty < worldData.sizeY - 30)
+                            {
+                                if (Vector2.Distance(new Vector2(cx, cy), new Vector2(tx, ty)) <= radius)
+                                {
+                                    worldData.tiles[tx, ty].type = TileType.Air;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                currentX += Mathf.Cos(angle) * 1.5f;
+                currentY += Mathf.Sin(angle) * 1.2f;
+
+                angle += (float)(rng.NextDouble() * 0.6f - 0.3f);
+
+                if (Mathf.Sin(angle) > 0.5f)
+                {
+                    angle -= 0.2f;
+                }
+
+                radius += (float)(rng.NextDouble() * 0.8f - 0.4f);
+                radius = Mathf.Clamp(radius, 2f, 8f);
+
+                if (rng.NextDouble() < 0.02f && lifeTime > 30)
+                {
+                    currentX += rng.Next(-3, 4);
+                    angle += Mathf.PI / 2f;
                 }
             }
-        }
-
-        // 2. Iteracje Cellular Automata (4 przejœcia wystarcz¹ dla tej skali)
-        for (int i = 0; i < 4; i++)
-        {
-            TileType[,] nextMap = new TileType[worldData.sizeX, worldData.sizeY];
-
-            for (int x = 0; x < worldData.sizeX; x++)
-            {
-                for (int y = 0; y < worldData.sizeY; y++)
-                {
-                    int walls = CountAliveNeighbors(worldData, x, y);
-
-                    // Regu³a: Jeœli ma mniej ni¿ 4 s¹siadów - staje siê powietrzem
-                    // Jeœli ma 5 lub wiêcej - staje siê œcian¹
-                    if (walls < 4) nextMap[x, y] = TileType.Air;
-                    else nextMap[x, y] = worldData.tiles[x, y].type;
-                }
-            }
-
-            // Kopiowanie zmian
-            for (int x = 0; x < worldData.sizeX; x++)
-                for (int y = 0; y < worldData.sizeY; y++)
-                    worldData.tiles[x, y].type = nextMap[x, y];
         }
     }
-    private static int CountAliveNeighbors(WorldData worldData, int x, int y)
+
+    public static Vector2 GetSpawnPoint(WorldData worldData)
     {
-        int count = 0;
-        for (int i = -1; i <= 1; i++)
+        int spawnX = worldData.sizeX / 2;
+
+        for (int y = worldData.sizeY - 1; y >= 0; y--)
         {
-            for (int j = -1; j <= 1; j++)
+            if (worldData.tiles[spawnX, y].type != TileType.Air)
             {
-                if (i == 0 && j == 0) continue; // Nie liczymy samego siebie
-
-                int nx = x + i;
-                int ny = y + j;
-
-                // Sprawdzamy granice mapy
-                if (nx >= 0 && nx < worldData.sizeX && ny >= 0 && ny < worldData.sizeY)
-                {
-                    // Liczymy jako s¹siada wszystko, co nie jest powietrzem
-                    if (worldData.tiles[nx, ny].type != TileType.Air) count++;
-                }
-                else
-                {
-                    // Krawêdzie mapy traktujemy jako œciany, ¿eby jaskinie nie "wylewa³y siê" poza œwiat
-                    count++;
-                }
+                return new Vector2(spawnX, y + 2f);
             }
         }
-        return count;
+
+        return new Vector2(spawnX, worldData.sizeY / 2f);
     }
 }

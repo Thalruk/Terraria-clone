@@ -4,7 +4,8 @@ using UnityEngine;
 
 public class ChunkManager : MonoBehaviour
 {
-    [SerializeField] Transform watchedObject;
+    public static ChunkManager Instance { get; private set; }
+    Transform watchedObject;
 
     [SerializeField] int renderDistance = 2;
     [SerializeField] int chunkSize;
@@ -14,6 +15,14 @@ public class ChunkManager : MonoBehaviour
 
     void Start()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+        }
+        else
+        {
+            Instance = this;
+        }
         chunkSize = WorldManager.Instance.chunkSize;
         StartCoroutine(CheckChunksLoop());
     }
@@ -76,5 +85,32 @@ public class ChunkManager : MonoBehaviour
 
             yield return new WaitForSeconds(checkInterval);
         }
+    }
+    public void UpdateDamageVisual(Vector2Int globalPos, bool isDamaged)
+    {
+        Vector2Int chunkCoord = new Vector2Int(
+            Mathf.FloorToInt((float)globalPos.x / chunkSize),
+            Mathf.FloorToInt((float)globalPos.y / chunkSize)
+        );
+
+        if (activeChunks.TryGetValue(chunkCoord, out Chunk chunk))
+        {
+            int localX = globalPos.x % chunkSize;
+            int localY = globalPos.y % chunkSize;
+
+            chunk.UpdateDamageVisual(localX, localY, isDamaged);
+        }
+    }
+    public void RefreshChunk(Vector2Int chunkCoord)
+    {
+        if (activeChunks.TryGetValue(chunkCoord, out Chunk chunk))
+        {
+            chunk.RenderWorld(WorldManager.Instance.worldData, chunkCoord.x, chunkCoord.y, chunkSize);
+        }
+    }
+
+    public void SetWatchedObject(Transform obj)
+    {
+        watchedObject = obj;
     }
 }
